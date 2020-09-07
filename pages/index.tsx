@@ -1,16 +1,23 @@
 import {useEffect, useState} from "react";
-import {Button, Card, Icon, Layout, Page, ResourceItem, ResourceList, TextField, TextStyle} from "@shopify/polaris";
+import {
+    Banner,
+    Button,
+    Card,
+    Icon,
+    Layout,
+    Page,
+    ResourceItem,
+    ResourceList,
+    TextField,
+    TextStyle, Toast
+} from "@shopify/polaris";
 import {SearchMinor} from "@shopify/polaris-icons";
-
-interface Movie {
-    Poster: string,
-    Title: string,
-    Type: string,
-    Year: string,
-    imdbID: string
-}
+import {useRouter} from "next/router";
+import {Movie} from "../lib/types";
 
 export default function Index() {
+    const router = useRouter();
+
     // search query string
     const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -26,11 +33,26 @@ export default function Index() {
     // error message to display to user  where appropriate
     const [errorMessage, setErrorMessage] = useState<string>(null);
 
+    // states to control toasts
+    const [addedToast, setAddedToast] = useState<boolean>(false);
+    const [removedToast, setRemovedToast] = useState<boolean>(false);
+
+    const addedToastMarkup = addedToast ? (
+        <Toast content="Movie added" onDismiss={() => setAddedToast(false)}/>
+    ) : null;
+
+    const removedToastMarkup = removedToast ? (
+        <Toast content="Movie removed" onDismiss={() => setRemovedToast(false)}/>
+    ) : null;
+
     // on component mount (or static hydration, at which point localStorage becomes available), load localStorage
     // saved movies into savedMovies state var if possible
     useEffect(() => {
         const localSavedMovies = JSON.parse(localStorage.getItem("savedMovies"));
         if (localSavedMovies) setSavedMovies(localSavedMovies);
+
+        const localSearchQuery = localStorage.getItem("searchQuery");
+        if (localSearchQuery) searchQueryChange(localSearchQuery);
     }, []);
 
     function searchQueryChange(newSearchQuery: string): void {
@@ -39,6 +61,9 @@ export default function Index() {
 
         // update controlled search field component
         setSearchQuery(newSearchQuery);
+
+        // store search query in localStorage
+        localStorage.setItem("searchQuery", newSearchQuery);
 
         // set searchLoading to true to show loading indicator next to search field and over search results list
         setSearchLoading(true);
@@ -68,6 +93,9 @@ export default function Index() {
     function addNomination(movie: Movie): void {
         const newSavedMovies = [...savedMovies, movie];
         setSavedMovies(newSavedMovies);
+
+        // show confirmation toast
+        setAddedToast(true);
         localStorage.setItem("savedMovies", JSON.stringify(newSavedMovies));
     }
 
@@ -75,6 +103,9 @@ export default function Index() {
     function deleteNomination(imdbID: string): void {
         const newSavedMovies = savedMovies.slice(0).filter(movie => movie.imdbID !== imdbID);
         setSavedMovies(newSavedMovies);
+
+        // show confirmation toast
+        setRemovedToast(true);
         localStorage.setItem("savedMovies", JSON.stringify(newSavedMovies));
     }
 
@@ -85,145 +116,192 @@ export default function Index() {
 
     return (
         <Page
-            title="Shoppies Nominations Portal"
-            breadcrumbs={[{"content": "The Shoppies", "url": "/"}]}
+            title="Nomination Portal"
+            subtitle="Browse movies and select five movies to nominate for The Shoppies"
         >
             <Layout>
+                {savedMovies.length === 5 && (
+                    <Layout.Section>
+                        <Banner
+                            status="success"
+                            title="Nomination list complete"
+                            action={
+                                {
+                                    content: "Share your list",
+                                    onAction() {
+                                        router.push({
+                                            pathname: "/share",
+                                            query: {
+                                                movies: savedMovies.map(movie => movie.imdbID),
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        >
+                            <p>You've added five movies and completed your list. Press the button below to share it!</p>
+                        </Banner>
+                    </Layout.Section>
+                )}
                 <Layout.Section>
-                    <Card title="Search for movies to nominate" sectioned>
-                        <TextField
-                            label=""
-                            value={searchQuery}
-                            onChange={searchQueryChange}
-                            prefix={<Icon source={SearchMinor} color="inkLighter"/>}
-                            placeholder="Search"
-                        />
-                        {/*<div style={{marginTop: "1rem"}}>*/}
-                        {/*    <ResourceList*/}
-                        {/*        items={searchResults}*/}
-                        {/*        loading={searchLoading}*/}
-                        {/*        renderItem={(movie: Movie) => {*/}
-                        {/*            const {Poster, Title, Type, Year, imdbID} = movie;*/}
+                    <Card title="Search for movies to nominate">
+                        <Card.Section>
+                            {savedMovies.length < 5 && (
+                                <div className="mb-2">
+                                    <Banner
+                                        status="info"
+                                        title={`Nominate ${5 - savedMovies.length} more movie${savedMovies.length < 4 ? "s" : ""}`}
+                                    >
+                                        <p>Add five movies to your list to complete your nomination</p>
+                                    </Banner>
+                                </div>
+                            )}
+                            <TextField
+                                label=""
+                                value={searchQuery}
+                                onChange={searchQueryChange}
+                                prefix={<Icon source={SearchMinor} color="inkLighter"/>}
+                                placeholder="Search"
+                            />
+                        </Card.Section>
+                        <ResourceList
+                            items={searchResults}
+                            loading={searchLoading}
+                            renderItem={(movie: Movie) => {
+                                const {Poster, Title, Type, Year, imdbID} = movie;
 
-                        {/*            // if there's no poster, display a solid color rectangle. otherwise, display the poster*/}
-                        {/*            const media = Poster === "N/A" ?*/}
-                        {/*                <div style={{width: 80, height: 120, backgroundColor: "rgba(0,0,0,0.1)"}}/> :*/}
-                        {/*                <img style={{width: 80}} src={Poster}/>;*/}
-
-                        {/*            return (*/}
-                        {/*                <ResourceItem*/}
-                        {/*                    id={imdbID}*/}
-                        {/*                    onClick={() => {*/}
-                        {/*                    }}*/}
-                        {/*                    media={media}*/}
-                        {/*                >*/}
-                        {/*                    <h3>*/}
-                        {/*                        <TextStyle variation="strong">{Title}</TextStyle>*/}
-                        {/*                    </h3>*/}
-                        {/*                    <div><span>{Year}</span></div>*/}
-                        {/*                    <div style={{marginTop: "1rem"}}>*/}
-                        {/*                        {isNominated(imdbID) ? (*/}
-                        {/*                            <Button*/}
-                        {/*                                size="slim"*/}
-                        {/*                                onClick={() => deleteNomination(imdbID)}*/}
-                        {/*                            >Remove from nominations</Button>*/}
-                        {/*                        ) : (*/}
-                        {/*                            <Button*/}
-                        {/*                                size="slim"*/}
-                        {/*                                onClick={() => addNomination({*/}
-                        {/*                                    Poster: Poster,*/}
-                        {/*                                    Title: Title,*/}
-                        {/*                                    Type: Type,*/}
-                        {/*                                    Year: Year,*/}
-                        {/*                                    imdbID: imdbID*/}
-                        {/*                                })}*/}
-                        {/*                            >Nominate</Button>*/}
-                        {/*                        )}*/}
-                        {/*                    </div>*/}
-                        {/*                </ResourceItem>*/}
-                        {/*            );*/}
-                        {/*        }}*/}
-                        {/*    />*/}
-                        {/*    {searchQuery && errorMessage && <p>{errorMessage}</p>}*/}
-                        {/*</div>*/}
-                    </Card>
-                    {searchResults.map(movie => {
-                        const {Poster, Title, Type, Year, imdbID} = movie;
-
-                        // if there's no poster, display a solid color rectangle. otherwise, display the poster
-                        const media = Poster === "N/A" ?
-                            <div style={{width: 80, height: 120, backgroundColor: "rgba(0,0,0,0.1)"}}/> :
-                            <img style={{width: 80}} src={Poster}/>;
-
-                        return (
-                            <Card>
-                                <Card.Section>
-                                    {media}
-                                    <h3>
-                                        <TextStyle variation="strong">{Title}</TextStyle>
-                                    </h3>
-                                    <div><span>{Year}</span></div>
-                                    <div style={{marginTop: "1rem"}}>
-                                        {isNominated(imdbID) ? (
-                                            <Button
-                                                size="slim"
-                                                onClick={() => deleteNomination(imdbID)}
-                                            >Remove from nominations</Button>
-                                        ) : (
-                                            <Button
-                                                size="slim"
-                                                onClick={() => addNomination({
-                                                    Poster: Poster,
-                                                    Title: Title,
-                                                    Type: Type,
-                                                    Year: Year,
-                                                    imdbID: imdbID
-                                                })}
-                                            >Nominate</Button>
-                                        )}
+                                // if there's no poster, display a solid color rectangle. otherwise, display the poster
+                                const media = (
+                                    <div className="flex" style={{
+                                        width: 80,
+                                        height: 116,
+                                        backgroundColor: "#212B36",
+                                        alignItems: "center"
+                                    }}>
+                                        {Poster === "N/A" ? (
+                                            <div style={{textAlign: "center", padding: "0.5rem", color: "white"}}>
+                                                <TextStyle variation="subdued">No poster found</TextStyle>
+                                            </div>
+                                        ) : <img style={{width: 80}} src={Poster}
+                                                 alt={`Poster for movie ${Title} (${Year})`}/>}
                                     </div>
+                                );
 
-                                </Card.Section>
-                            </Card>);
-                    })}
-                    {searchQuery && errorMessage && <p>{errorMessage}</p>}
-                </Layout.Section>
-                <Layout.Section secondary>
-                    <Card title="My nominations" sectioned>
-                        <div style={{marginTop: "1rem"}}>
-                            <ResourceList
-                                items={savedMovies}
-                                loading={searchLoading}
-                                renderItem={(movie: Movie) => {
-                                    const {Poster, Title, Type, Year, imdbID} = movie;
-
-                                    // if there's no poster, display a solid color rectangle. otherwise, display the poster
-                                    const media = Poster === "N/A" ?
-                                        <div style={{width: 80, height: 120, backgroundColor: "rgba(0,0,0,0.1)"}}/> :
-                                        <img style={{width: 80}} src={Poster}/>;
-
-                                    return (
-                                        <ResourceItem
-                                            id={imdbID}
-                                            onClick={() => {
-                                            }}
-                                            media={media}
-                                        >
+                                return (
+                                    <ResourceItem
+                                        id={imdbID}
+                                        onClick={() => {
+                                        }}
+                                        media={media}
+                                    >
+                                        <div style={{
+                                            minHeight: 116
+                                        }}>
                                             <h3>
                                                 <TextStyle variation="strong">{Title}</TextStyle>
                                             </h3>
                                             <div><span>{Year}</span></div>
                                             <div style={{marginTop: "1rem"}}>
-                                                <Button
-                                                    size="slim"
-                                                    onClick={() => deleteNomination(imdbID)}
-                                                >Remove</Button>
+                                                {isNominated(imdbID) ? (
+                                                    <>
+                                                        <p>
+                                                            <TextStyle variation="subdued">
+                                                                This movie is in your nominations.
+                                                            </TextStyle>
+                                                        </p>
+                                                        <Button
+                                                            plain
+                                                            destructive
+                                                            onClick={() => deleteNomination(imdbID)}
+                                                        >Remove from nominations</Button>
+                                                    </>
+                                                ) : (
+                                                    <Button
+                                                        size="slim"
+                                                        onClick={() => addNomination({
+                                                            Poster: Poster,
+                                                            Title: Title,
+                                                            Type: Type,
+                                                            Year: Year,
+                                                            imdbID: imdbID
+                                                        })}
+                                                        disabled={savedMovies.length >= 5}
+                                                    >Add to nominations</Button>
+                                                )}
                                             </div>
-                                        </ResourceItem>
-                                    )
-                                }}
-                            />
-                        </div>
+                                        </div>
+                                    </ResourceItem>
+                                );
+                            }}
+                        />
+                        {addedToastMarkup}
+                        {removedToastMarkup}
+                        {searchQuery ? (errorMessage && (
+                            <Card.Section>
+                                <p><TextStyle variation="subdued">Error: {errorMessage}</TextStyle></p>
+                            </Card.Section>
+                        )) : (
+                            <Card.Section>
+                                <p><TextStyle variation="subdued">Enter a title in the search bar above to search for movies.</TextStyle></p>
+                            </Card.Section>
+                        )}
+                    </Card>
+                </Layout.Section>
+                <Layout.Section secondary>
+                    <Card title={`My nominations (${savedMovies.length})`}>
+                        {savedMovies.length > 0 ? (
+                            <div className="mt-1">
+                                <ResourceList
+                                    items={savedMovies}
+                                    loading={searchLoading}
+                                    renderItem={(movie: Movie) => {
+                                        const {Poster, Title, Type, Year, imdbID} = movie;
+
+                                        // if there's no poster, display a solid color rectangle. otherwise, display the poster
+                                        const media = (
+                                            <div className="flex" style={{
+                                                width: 60,
+                                                height: 87,
+                                                backgroundColor: "#212B36",
+                                                alignItems: "center"
+                                            }}>
+                                                {Poster === "N/A" ? (
+                                                    <div style={{textAlign: "center", padding: "0.5rem", color: "white"}}>
+                                                        <TextStyle variation="subdued">No poster found</TextStyle>
+                                                    </div>
+                                                ) : <img style={{width: 60}} src={Poster}
+                                                         alt={`Poster for movie ${Title} (${Year})`}/>}
+                                            </div>
+                                        );
+
+                                        return (
+                                            <ResourceItem
+                                                id={imdbID}
+                                                onClick={() => {
+                                                }}
+                                                media={media}
+                                            >
+                                                <h3>
+                                                    <TextStyle variation="strong">{Title}</TextStyle>
+                                                </h3>
+                                                <div><span>{Year}</span></div>
+                                                <div style={{marginTop: "1rem"}}>
+                                                    <Button
+                                                        plain
+                                                        destructive
+                                                        onClick={() => deleteNomination(imdbID)}
+                                                    >Remove from nominations</Button>
+                                                </div>
+                                            </ResourceItem>
+                                        )
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <Card.Section>
+                                <p><TextStyle variation="subdued">You haven't nominated any movies yet.</TextStyle></p>
+                            </Card.Section>
+                        )}
                     </Card>
                 </Layout.Section>
             </Layout>
