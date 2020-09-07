@@ -4,7 +4,7 @@ import {
     Button,
     Card,
     Icon,
-    Layout,
+    Layout, Modal,
     Page,
     ResourceItem,
     ResourceList,
@@ -14,6 +14,7 @@ import {
 import {SearchMinor} from "@shopify/polaris-icons";
 import {useRouter} from "next/router";
 import {Movie} from "../lib/types";
+import ShareModal from "../components/shareModal";
 
 export default function Index() {
     const router = useRouter();
@@ -44,6 +45,9 @@ export default function Index() {
     const removedToastMarkup = removedToast ? (
         <Toast content="Movie removed" onDismiss={() => setRemovedToast(false)}/>
     ) : null;
+
+    // states to control sharing modal
+    const [shareModalState, setShareModalState] = useState<boolean>(false);
 
     // on component mount (or static hydration, at which point localStorage becomes available), load localStorage
     // saved movies into savedMovies state var if possible
@@ -128,14 +132,7 @@ export default function Index() {
                             action={
                                 {
                                     content: "Share your list",
-                                    onAction() {
-                                        router.push({
-                                            pathname: "/share",
-                                            query: {
-                                                movies: savedMovies.map(movie => movie.imdbID),
-                                            }
-                                        });
-                                    }
+                                    onAction() {setShareModalState(true)}
                                 }
                             }
                         >
@@ -236,6 +233,7 @@ export default function Index() {
                         />
                         {addedToastMarkup}
                         {removedToastMarkup}
+                        <ShareModal savedMovies={savedMovies} open={shareModalState} setOpen={setShareModalState}/>
                         {searchQuery ? (errorMessage && (
                             <Card.Section>
                                 <p><TextStyle variation="subdued">Error: {errorMessage}</TextStyle></p>

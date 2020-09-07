@@ -11,6 +11,7 @@
     "@shopify/polaris": "^5.2.1",
     "@types/node": "^14.6.4",
     "@types/react": "^16.9.49",
+    "copy-to-clipboard": "^3.3.1",
     "next": "9.5.3",
     "react": "16.13.1",
     "react-dom": "16.13.1",
