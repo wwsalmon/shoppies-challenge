@@ -3,6 +3,8 @@
 # The Shoppies Nomination Portal
 Made by Samson Zhang as part of application to winter 2021 Shopify web developer and UX developer internships. Original challenge instructions [here](https://docs.google.com/document/d/1AZO0BZwn1Aogj4f3PDNe1mhq8pKsXZxtrG--EIbP_-w/preview?pru=AAABdI4KLHc*1OQJp7_pyxcqdHOIoJzf_g#heading=h.31w9woubunro)
 
+Go to live website: [https://sz-shoppies-challenge.vercel.app/](https://sz-shoppies-challenge.vercel.app/)
+
 ## Overview
 **UX**
 
