@@ -34,6 +34,15 @@ export default function ShareModal({savedMovies, open, setOpen}: { savedMovies: 
         <Toast content="URL copied!" onDismiss={() => setCopyToast(false)}/>
     ) : null;
 
+    // useEffect function to load localStorage info on component mount
+    useEffect(() => {
+        const localName = localStorage.getItem("shareName");
+        if (localName) setName(localName);
+
+        const localAuthor = localStorage.getItem("shareAuthor");
+        if (localAuthor) setAuthor(localAuthor);
+    }, []);
+
     // useEffect function to update url whenever relevant variables are changed
     useEffect(() => {
         const currDate = (new Date()).toISOString();
@@ -52,13 +61,22 @@ export default function ShareModal({savedMovies, open, setOpen}: { savedMovies: 
         <Modal title="Share list" open={open} onClose={() => setOpen(false)}>
             <Modal.Section>
                 <FormLayout>
-                    <TextField label="Shareable link" value={url} disabled/>
-                    <Button onClick={copyUrl}>Copy URL</Button>
+                    <Heading>Share link</Heading>
+                    <TextField
+                        label=""
+                        value={url}
+                        connectedRight={(
+                            <>
+                                <Button primary onClick={copyUrl}>Copy URL</Button>
+                                <Button url={url} external={true}>Open link</Button>
+                            </>
+                        )}
+                    />
                 </FormLayout>
             </Modal.Section>
             <Modal.Section>
                 <FormLayout>
-                    <Heading>Add details (optional)</Heading>
+                    <Heading>Give your list a name (optional)</Heading>
                     <p><TextStyle variation="subdued">The link above will update with any new details you enter.</TextStyle></p>
                     <Stack distribution="fillEvenly">
                         <TextField label="List name" value={name} onChange={onNameChange}/>

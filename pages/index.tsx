@@ -2,9 +2,9 @@ import {useEffect, useState} from "react";
 import {
     Banner,
     Button,
-    Card,
+    Card, Collapsible, FooterHelp,
     Icon,
-    Layout, Modal,
+    Layout, Link, Modal,
     Page,
     ResourceItem,
     ResourceList,
@@ -37,6 +37,7 @@ export default function Index() {
     // states to control toasts
     const [addedToast, setAddedToast] = useState<boolean>(false);
     const [removedToast, setRemovedToast] = useState<boolean>(false);
+    const [completedToast, setCompletedToast] = useState<boolean>(false);
 
     const addedToastMarkup = addedToast ? (
         <Toast content="Movie added" onDismiss={() => setAddedToast(false)}/>
@@ -46,8 +47,83 @@ export default function Index() {
         <Toast content="Movie removed" onDismiss={() => setRemovedToast(false)}/>
     ) : null;
 
-    // states to control sharing modal
+    const completedToastMarkup = completedToast ? (
+        <Toast content="Nominations complete" onDismiss={() => setCompletedToast(false)}/>
+    ) : null;
+
+    // state to control sharing modal
     const [shareModalState, setShareModalState] = useState<boolean>(false);
+
+    // state to control list clearing modal
+    const [clearModalState, setClearModalState] = useState<boolean>(false);
+
+    const clearModalMarkup = (
+        <Modal
+            title="Confirm list clearing"
+            open={clearModalState}
+            onClose={() => setClearModalState(false)}
+            primaryAction={{
+                content: 'Clear nominations',
+                destructive: true,
+                onAction: clearNominations,
+            }}
+        >
+            <Modal.Section>
+                <p>Are you sure you want to clear your nomination list?</p>
+            </Modal.Section>
+        </Modal>
+    )
+
+    // state to control collapsible nominations list for mobile
+    const [collapsibleList, setCollapsibleList] = useState<boolean>(false);
+
+    const nominationsMarkup = (
+        <ResourceList
+            items={savedMovies}
+            loading={searchLoading}
+            renderItem={(movie: Movie) => {
+                const {Poster, Title, Type, Year, imdbID} = movie;
+
+                // if there's no poster, display a solid color rectangle. otherwise, display the poster
+                const media = (
+                    <div className="flex" style={{
+                        width: 60,
+                        height: 87,
+                        backgroundColor: "#212B36",
+                        alignItems: "center"
+                    }}>
+                        {Poster === "N/A" ? (
+                            <div style={{textAlign: "center", padding: "0.5rem", color: "white"}}>
+                                <TextStyle variation="subdued">No poster found</TextStyle>
+                            </div>
+                        ) : <img style={{width: 60}} src={Poster}
+                                 alt={`Poster for movie ${Title} (${Year})`}/>}
+                    </div>
+                );
+
+                return (
+                    <ResourceItem
+                        id={imdbID}
+                        onClick={() => {
+                        }}
+                        media={media}
+                    >
+                        <h3>
+                            <TextStyle variation="strong">{Title}</TextStyle>
+                        </h3>
+                        <div><span>{Year}</span></div>
+                        <div style={{marginTop: "1rem"}}>
+                            <Button
+                                plain
+                                destructive
+                                onClick={() => deleteNomination(imdbID)}
+                            >Remove from nominations</Button>
+                        </div>
+                    </ResourceItem>
+                )
+            }}
+        />
+    )
 
     // on component mount (or static hydration, at which point localStorage becomes available), load localStorage
     // saved movies into savedMovies state var if possible
@@ -60,9 +136,6 @@ export default function Index() {
     }, []);
 
     function searchQueryChange(newSearchQuery: string): void {
-        // clear error message
-        setErrorMessage(null);
-
         // update controlled search field component
         setSearchQuery(newSearchQuery);
 
@@ -75,12 +148,17 @@ export default function Index() {
         fetch(`http://www.omdbapi.com/?apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}&s=${newSearchQuery}`)
             .then(res => res.json())
             .then(data => {
-                // set search results to empty array if OMDb returns error, signaling no results
-                // otherwise, set search results to returned search results
-                setSearchResults(data.Error ? [] : data.Search);
 
                 // if OMDb returns error, store it in state variable to display to user
-                if (data.Error) setErrorMessage(data.Error);
+                if (data.Error) {
+                    setErrorMessage(data.Error);
+                    setSearchResults([]);
+                }
+                // otherwise, clear any previous error messages and update result
+                else {
+                    setErrorMessage(null);
+                    setSearchResults(data.Search);
+                }
 
                 // data loaded, get rid of loading indicators
                 setSearchLoading(false);
@@ -97,6 +175,16 @@ export default function Index() {
     function addNomination(movie: Movie): void {
         const newSavedMovies = [...savedMovies, movie];
         setSavedMovies(newSavedMovies);
+
+        // if added movie completes list, show toast and scroll to top of page, where banner is
+        if (newSavedMovies.length === 5) {
+            setCompletedToast(true);
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+        }
 
         // show confirmation toast
         setAddedToast(true);
@@ -116,6 +204,14 @@ export default function Index() {
     // check if movie is on nominations list by unique imdbID
     function isNominated(imdbID: string): boolean {
         return savedMovies.findIndex(movie => movie.imdbID === imdbID) > -1;
+    }
+
+    // clear nomination list and reset localStorage saved list and list name
+    function clearNominations(): void {
+        setSavedMovies([]);
+        setClearModalState(false);
+        localStorage.removeItem("savedMovies");
+        localStorage.removeItem("shareName");
     }
 
     return (
@@ -142,17 +238,37 @@ export default function Index() {
                 )}
                 <Layout.Section>
                     <Card title="Search for movies to nominate">
-                        <Card.Section>
-                            {savedMovies.length < 5 && (
-                                <div className="mb-2">
-                                    <Banner
-                                        status="info"
-                                        title={`Nominate ${5 - savedMovies.length} more movie${savedMovies.length < 4 ? "s" : ""}`}
-                                    >
-                                        <p>Add five movies to your list to complete your nomination</p>
-                                    </Banner>
+                        {savedMovies.length < 5 && (
+                            <Card.Section>
+                                <Banner
+                                    status="info"
+                                    title={`Nominate ${5 - savedMovies.length} more movie${savedMovies.length < 4 ? "s" : ""}`}
+                                >
+                                    <p>Add five movies to your list to complete your nomination</p>
+                                </Banner>
+                            </Card.Section>
+                        )}
+                        <div className="hidden-md">
+                            <Card.Section subdued>
+                                <Button
+                                    fullWidth
+                                    onClick={() => setCollapsibleList(!collapsibleList)}
+                                    disabled={savedMovies.length === 0}
+                                >
+                                    {savedMovies.length > 0 ? `${collapsibleList ? "Hide" : "View"} nominated movies (${savedMovies.length}/5)` : "You haven't nominated any movies yet."}
+                                </Button>
+                            </Card.Section>
+                            <Collapsible
+                                open={collapsibleList}
+                                id="nominations-collapsible"
+                                transition={{duration: '150ms', timingFunction: 'ease'}}
+                            >
+                                <div className="Polaris-Card__Section--subdued mb-2">
+                                    {nominationsMarkup}
                                 </div>
-                            )}
+                            </Collapsible>
+                        </div>
+                        <Card.Section>
                             <TextField
                                 label=""
                                 value={searchQuery}
@@ -233,6 +349,7 @@ export default function Index() {
                         />
                         {addedToastMarkup}
                         {removedToastMarkup}
+                        {completedToastMarkup}
                         <ShareModal savedMovies={savedMovies} open={shareModalState} setOpen={setShareModalState}/>
                         {searchQuery ? (errorMessage && (
                             <Card.Section>
@@ -246,61 +363,32 @@ export default function Index() {
                     </Card>
                 </Layout.Section>
                 <Layout.Section secondary>
-                    <Card title={`My nominations (${savedMovies.length})`}>
+                    <Card title={`My nominations (${savedMovies.length}/5)`}>
                         {savedMovies.length > 0 ? (
                             <div className="mt-1">
-                                <ResourceList
-                                    items={savedMovies}
-                                    loading={searchLoading}
-                                    renderItem={(movie: Movie) => {
-                                        const {Poster, Title, Type, Year, imdbID} = movie;
-
-                                        // if there's no poster, display a solid color rectangle. otherwise, display the poster
-                                        const media = (
-                                            <div className="flex" style={{
-                                                width: 60,
-                                                height: 87,
-                                                backgroundColor: "#212B36",
-                                                alignItems: "center"
-                                            }}>
-                                                {Poster === "N/A" ? (
-                                                    <div style={{textAlign: "center", padding: "0.5rem", color: "white"}}>
-                                                        <TextStyle variation="subdued">No poster found</TextStyle>
-                                                    </div>
-                                                ) : <img style={{width: 60}} src={Poster}
-                                                         alt={`Poster for movie ${Title} (${Year})`}/>}
-                                            </div>
-                                        );
-
-                                        return (
-                                            <ResourceItem
-                                                id={imdbID}
-                                                onClick={() => {
-                                                }}
-                                                media={media}
-                                            >
-                                                <h3>
-                                                    <TextStyle variation="strong">{Title}</TextStyle>
-                                                </h3>
-                                                <div><span>{Year}</span></div>
-                                                <div style={{marginTop: "1rem"}}>
-                                                    <Button
-                                                        plain
-                                                        destructive
-                                                        onClick={() => deleteNomination(imdbID)}
-                                                    >Remove from nominations</Button>
-                                                </div>
-                                            </ResourceItem>
-                                        )
-                                    }}
-                                />
+                                {nominationsMarkup}
                             </div>
                         ) : (
                             <Card.Section>
                                 <p><TextStyle variation="subdued">You haven't nominated any movies yet.</TextStyle></p>
                             </Card.Section>
                         )}
+                        <Card.Section>
+                            <Button
+                                plain
+                                destructive
+                                disabled={savedMovies.length === 0}
+                                onClick={() => setClearModalState(true)}>
+                                Clear list
+                            </Button>
+                        </Card.Section>
                     </Card>
+                    {clearModalMarkup}
+                </Layout.Section>
+                <Layout.Section>
+                    <FooterHelp>
+                        This portal was made for Shopify internship application challenge by Samson Zhang. <Link external={true} url="https://github.com/wwsalmon/shoppies-challenge">View on GitHub</Link>
+                    </FooterHelp>
                 </Layout.Section>
             </Layout>
         </Page>

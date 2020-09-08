@@ -1,3 +1,5 @@
+/* Tailwind-inspired util classes */
+
 .flex {
     display: flex;
 }
@@ -34,7 +36,71 @@
     margin-right: 2rem;
 }
 
+/* mobile responsiveness utils */
+
+.hidden {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .hidden-sm {
+        display: none;
+    }
+
+    .block-sm {
+        display: block;
+    }
+}
+
+@media (min-width: 804px) {
+    .hidden-md {
+        display: none;
+    }
+
+    .block-md {
+        display: block;
+    }
+}
+
 /* this kind of override is a little ugly, but no resource items in this project are meant to be clickable, so it was the cleanest solution */
 div.Polaris-ResourceItem {
     cursor: unset;
+}
+
+.public-grid {
+    display: grid;
+    column-gap: 2rem;
+    row-gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px){
+    .public-grid{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.custom-navbar-outer {
+    width: 100%;
+    background-color: white;
+}
+
+.custom-navbar {
+    height: 8rem;
+    padding: 2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-navbar img {
+    height: 100%;
+}
+
+/* match padding with Polaris components */
+
+@media (max-width: 489px) {
+    .custom-navbar {
+        padding: 2rem;
+    }
 }
