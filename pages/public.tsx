@@ -31,7 +31,7 @@ export default function Public() {
     }
 
     function getDescription(): string {
-        return `Nomination list ${name ? `"${name}" `} ${author ? `by ${author} `} for the first-ever Shoppies Movie Awards.`
+        return `Nomination list ${name ? `"${name}" ` : ""}${author ? `by ${author}` : ""} for the first-ever Shoppies Movie Awards.`
         if (name) return name;
     }
 
@@ -75,7 +75,7 @@ export default function Public() {
             <Head>
                 <title>{getTitle()} | The Shoppies</title>
                 <meta name="description"
-                      content="Nominate your favorite movies for the first-ever Shoppies Movie Awards, brought to you by Shopify."/>
+                      content={getDescription()}/>
             </Head>
             <Layout>
                 <Layout.Section>
