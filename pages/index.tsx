@@ -211,6 +211,7 @@ export default function Index() {
     function clearNominations(): void {
         setSavedMovies([]);
         setClearModalState(false);
+        setCollapsibleList(false);
         localStorage.removeItem("savedMovies");
         localStorage.removeItem("shareName");
     }
@@ -280,6 +281,15 @@ export default function Index() {
                             >
                                 <div className="Polaris-Card__Section--subdued mb-2">
                                     {nominationsMarkup}
+                                    <div className="polaris-padding pt-2 pb-2">
+                                        <Button
+                                            plain
+                                            destructive
+                                            disabled={savedMovies.length === 0}
+                                            onClick={() => setClearModalState(true)}>
+                                            Clear list
+                                        </Button>
+                                    </div>
                                 </div>
                             </Collapsible>
                         </div>
