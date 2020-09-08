@@ -15,6 +15,7 @@ import {SearchMinor} from "@shopify/polaris-icons";
 import {useRouter} from "next/router";
 import {Movie} from "../lib/types";
 import ShareModal from "../components/shareModal";
+import Head from "next/head";
 
 export default function Index() {
     const router = useRouter();
@@ -216,9 +217,14 @@ export default function Index() {
 
     return (
         <Page
+            separator
             title="Nomination Portal"
             subtitle="Browse and nominate movies for The Shoppies"
         >
+            <Head>
+                <title>The Shoppies Nomination Portal</title>
+                <meta name="description" content="Nominate your favorite movies for the first-ever Shoppies Movie Awards, brought to you by Shopify." />
+            </Head>
             <Layout>
                 <Layout.Section>
                     <div className="polaris-padding">
