@@ -25,6 +25,7 @@ export default function ShareModal({savedMovies, open, setOpen}: { savedMovies: 
         localStorage.setItem("shareAuthor", newValue);
     }
 
+    // function to copy url into clipboard
     function copyUrl() {
         copy(url);
         setCopyToast(true);
@@ -65,6 +66,7 @@ export default function ShareModal({savedMovies, open, setOpen}: { savedMovies: 
                     <TextField
                         label=""
                         value={url}
+                        onChange={() => {}}
                         connectedRight={(
                             <>
                                 <Button primary onClick={copyUrl}>Copy URL</Button>
