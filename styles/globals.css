@@ -100,7 +100,8 @@ div.Polaris-ResourceItem {
 /* match padding with Polaris components */
 
 @media (max-width: 489px) {
-    .custom-navbar {
-        padding: 2rem;
+    .custom-navbar, .polaris-padding {
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 }

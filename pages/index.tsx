@@ -7,7 +7,7 @@ import {
     Layout, Link, Modal,
     Page,
     ResourceItem,
-    ResourceList,
+    ResourceList, TextContainer,
     TextField,
     TextStyle, Toast
 } from "@shopify/polaris";
@@ -48,7 +48,7 @@ export default function Index() {
     ) : null;
 
     const completedToastMarkup = completedToast ? (
-        <Toast content="Nominations complete" onDismiss={() => setCompletedToast(false)}/>
+        <Toast content="Nomination list complete" onDismiss={() => setCompletedToast(false)}/>
     ) : null;
 
     // state to control sharing modal
@@ -217,9 +217,18 @@ export default function Index() {
     return (
         <Page
             title="Nomination Portal"
-            subtitle="Browse movies and select five movies to nominate for The Shoppies"
+            subtitle="Browse and nominate movies for The Shoppies"
         >
             <Layout>
+                <Layout.Section>
+                    <div className="polaris-padding">
+                        <TextContainer>
+                            <p><TextStyle variation="subdued">
+                                Shopify has branched out into movie award shows and we need your help. <br className="hidden block-sm"/>Nominate your five favorite movies for the first-ever Shoppies Awards!
+                            </TextStyle></p>
+                        </TextContainer>
+                    </div>
+                </Layout.Section>
                 {savedMovies.length === 5 && (
                     <Layout.Section>
                         <Banner
@@ -244,7 +253,7 @@ export default function Index() {
                                     status="info"
                                     title={`Nominate ${5 - savedMovies.length} more movie${savedMovies.length < 4 ? "s" : ""}`}
                                 >
-                                    <p>Add five movies to your list to complete your nomination</p>
+                                    <p>Add five movies to your list to complete your nomination list</p>
                                 </Banner>
                             </Card.Section>
                         )}
