@@ -145,7 +145,7 @@ export default function Index() {
         // set searchLoading to true to show loading indicator next to search field and over search results list
         setSearchLoading(true);
 
-        fetch(`http://www.omdbapi.com/?apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}&s=${newSearchQuery}`)
+        fetch(`https://www.omdbapi.com/?apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}&s=${newSearchQuery}`)
             .then(res => res.json())
             .then(data => {
 

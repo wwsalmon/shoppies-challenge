@@ -8,7 +8,7 @@ export default function PublicMovie({imdbID}: {imdbID: string}){
     const [errorMessage, setErrorMessage] = useState<string>(null);
 
     useEffect(() => {
-        fetch(`http://www.omdbapi.com/?apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}&i=${imdbID}`)
+        fetch(`https://www.omdbapi.com/?apikey=${process.env.NEXT_PUBLIC_OMDB_API_KEY}&i=${imdbID}`)
             .then(res => res.json())
             .then(data => {
                 // set search results to empty array if OMDb returns error, signaling no results

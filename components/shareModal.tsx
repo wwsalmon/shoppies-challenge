@@ -54,7 +54,7 @@ export default function ShareModal({savedMovies, open, setOpen}: { savedMovies: 
         if (name) paramsObj["name"] = name;
         if (author) paramsObj["author"] = author;
         const paramsString = stringify(paramsObj);
-        const newUrl = "http://localhost:3000/public?" + paramsString;
+        const newUrl = "https://sz-shoppies-challenge.vercel.app/public?" + paramsString;
         setUrl(newUrl);
     }, [savedMovies, name, author]);
 
